@@ -16,9 +16,18 @@ This project aligns with **United Nations Sustainable Development Goal (SDG) 3: 
 - Predict heart disease risk using a Random Forest classifier
 - Display prediction probability
 
-- Input patient information through an interactive web interface
-- Predict heart disease risk using a Random Forest classifier
-- Display prediction probability
+## AI Concepts and Algorithms
+
+This project utilizes several key AI and machine learning concepts:
+
+- **Supervised Learning**: The model is trained on labeled data to predict heart disease presence (binary classification).
+- **Random Forest Algorithm**: An ensemble method that builds multiple decision trees and combines their predictions for improved accuracy and reduced overfitting.
+- **Data Preprocessing**: Handling missing values, feature scaling (implicit in Random Forest), and data splitting for training/validation.
+- **Model Evaluation**: Accuracy metric to assess performance on unseen test data.
+- **Libraries Used**:
+  - `scikit-learn`: For machine learning algorithms and evaluation
+  - `pandas`: For data manipulation and analysis
+  - `joblib`: For model serialization and loading
 
 ## Installation
 
