@@ -291,12 +291,8 @@ if prediction_button:
 st.markdown("---")
 st.markdown("""
     <div class='footer'>
-        <h3>❤️ Heart Health is Wealth ❤️</h3>
-        <p>
-            💊 <strong>Medical Disclaimer:</strong> This application is for educational and informational purposes only. 
-            It should NOT be used as a substitute for professional medical advice, diagnosis, or treatment. 
-            Always consult with qualified healthcare professionals. 🏥
+        <p style='font-size: 0.9em; color: rgba(255,255,255,0.7);'>
+            💊 For educational purposes. Always consult healthcare professionals. 🏥
         </p>
-        <p>🔬 Model Accuracy: 88.33% | 🤖 Powered by Random Forest AI</p>
     </div>
 """, unsafe_allow_html=True)
