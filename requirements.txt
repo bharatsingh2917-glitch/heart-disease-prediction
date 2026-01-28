@@ -4,3 +4,7 @@ pandas
 numpy
 matplotlib
 joblib
+streamlit-authenticator
+reportlab
+python-dotenv
+pytest
