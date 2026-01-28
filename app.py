@@ -1,14 +1,17 @@
 import streamlit as st
 import joblib
 import numpy as np
+import pandas as pd
 import time
+import plotly.graph_objects as go
+from datetime import datetime
 
 # Load the model
 model = joblib.load('model.pkl')
 
 # Custom title with heart
 st.set_page_config(
-    page_title="❤️ Heart Disease Prediction", 
+    page_title="❤️ Elite Heart Disease Prediction", 
     page_icon="❤️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -134,182 +137,268 @@ st.markdown("""
 # Beautiful header
 st.markdown("""
     <div class='header-container'>
-        <h1 class='header-title'>❤️ Heart Disease Prediction</h1>
-        <p class='header-subtitle'>🫀 Advanced AI-Powered Health Assessment 🫀</p>
+        <h1 class='header-title'>❤️ Elite Heart Disease Prediction System</h1>
+        <p class='header-subtitle'>🫀 AI-Powered Cardiovascular Health Analysis 🫀</p>
     </div>
 """, unsafe_allow_html=True)
 
 # Sidebar with model info
 with st.sidebar:
-    st.markdown("### 📊 Model Information")
-    st.metric("🎯 Model Accuracy", "88.33%", help="Accuracy on test set")
-    st.metric("🤖 Algorithm", "Random Forest", help="Machine Learning Model")
-    st.metric("🌳 Number of Trees", "100", help="Ensemble estimators")
-    st.metric("📈 Test Set Size", "20%", help="Validation data split")
+    st.markdown("### 🏥 SYSTEM INFORMATION")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("🎯 Accuracy", "88.33%")
+    with col2:
+        st.metric("📊 Training Data", "297")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("🌳 Trees", "100")
+    with col2:
+        st.metric("📈 Features", "13")
     
     st.markdown("---")
-    st.markdown("### 💡 Quick Tips")
-    st.info("""
-    ✅ Enter accurate medical data for better predictions
+    st.markdown("### ⚙️ MODEL SPECS")
+    st.info("✅ Random Forest Classifier\n\n🌳 Ensemble Learning\n\n✅ Production Ready")
     
-    ⚠️ This is a screening tool only
-    
-    🏥 Always consult healthcare professionals
-    """)
+    st.markdown("---")
+    if 'prediction_history' in st.session_state and st.session_state.prediction_history:
+        st.markdown(f"### 📜 History ({len(st.session_state.prediction_history)})")
+        for i, pred in enumerate(st.session_state.prediction_history[-3:], 1):
+            risk = "HIGH" if pred['risk'] == 1 else "LOW"
+            st.text(f"{i}. {risk} - {pred['prob']:.1%}")
 
 # Welcome section
-with st.expander("📖 About This App", expanded=False):
-    st.markdown("""
-    🏥 **Welcome to the Heart Disease Prediction System**
-    
-    This cutting-edge application uses advanced machine learning to assess your heart health risk.
-    
-    **How it works:**
-    - ✅ Enter your medical information
-    - 🤖 Our AI model analyzes your data
-    - 📊 Get instant risk assessment
-    - 💡 Receive personalized insights
-    
-    **Model Performance:**
-    - 🎯 **Accuracy: 88.33%** - Highly reliable predictions
-    - 🌳 Trained on 297 patient samples
-    - 📊 13 different health factors analyzed
-    
-    **Important:** This tool is for educational purposes only. Always consult qualified healthcare professionals.
-    """)
+with st.expander("📖 About This System", expanded=False):
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("""
+        ### 🏥 Overview
+        
+        Elite Heart Disease Prediction System uses machine learning to assess cardiovascular risk.
+        
+        ### 🎯 Features
+        - 🤖 AI-Powered Analysis
+        - 📊 Real-time Predictions
+        - 💡 Personalized Insights
+        - 🔍 Detailed Analysis
+        """)
+    with col2:
+        st.markdown("""
+        ### 📊 Performance
+        
+        **Accuracy:** 88.33% ⭐
+        
+        **Type:** Classification
+        
+        **Trained on:** 297 samples
+        """)
 
 # Input features section
 st.markdown("<div class='input-section'>", unsafe_allow_html=True)
-st.markdown("## 💓 Enter Patient Information")
-st.markdown("*Please provide accurate medical information for better predictions*")
+st.markdown("## 💓 Patient Medical Information")
+st.markdown("*Enter accurate medical data for analysis*")
 
-col1, col2 = st.columns(2)
+# Tabs for better organization
+tab1, tab2, tab3 = st.tabs(["👤 Personal", "🫀 Cardiac", "🧬 Metabolic"])
 
-with col1:
-    st.markdown("### Personal & Demographic Info")
-    age = st.slider('👤 Age (years)', 20, 100, 50, help="Patient's age in years")
-    sex = st.selectbox('⚧ Sex', [0, 1], format_func=lambda x: '👩 Female' if x == 0 else '👨 Male')
+with tab1:
+    col1, col2 = st.columns(2)
+    with col1:
+        age = st.slider('👤 Age (years)', 20, 100, 50)
+    with col2:
+        sex = st.selectbox('⚧ Sex', [0, 1], format_func=lambda x: '👩 Female' if x == 0 else '👨 Male')
+
+with tab2:
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        cp = st.selectbox('🤕 Chest Pain', [0, 1, 2, 3], 
+                         format_func=lambda x: ['Typical', 'Atypical', 'Non-anginal', 'Asymptomatic'][x])
+    with col2:
+        thalach = st.slider('⚡ Max Heart Rate', 70, 220, 150)
+    with col3:
+        exang = st.selectbox('🏃 Exercise Angina', [0, 1], format_func=lambda x: 'No' if x == 0 else 'Yes')
     
-    st.markdown("### Blood & Metabolic Indicators")
-    chol = st.slider('🧬 Serum Cholesterol (mg/dl)', 100, 600, 200, help="Total cholesterol level")
-    fbs = st.selectbox('🍬 Fasting Blood Sugar > 120 mg/dl', [0, 1], format_func=lambda x: 'No ✅' if x == 0 else 'Yes ⚠️')
-    trestbps = st.slider('🩸 Resting Blood Pressure (mm Hg)', 90, 200, 120, help="Systolic blood pressure")
-
-with col2:
-    st.markdown("### Cardiac Assessment")
-    cp = st.selectbox('🤕 Chest Pain Type', [0, 1, 2, 3], format_func=lambda x: ['Typical Angina', 'Atypical Angina', 'Non-anginal Pain', 'Asymptomatic'][x])
-    thalach = st.slider('⚡ Maximum Heart Rate Achieved', 70, 220, 150, help="Peak heart rate during exercise")
-    exang = st.selectbox('🏃 Exercise Induced Angina', [0, 1], format_func=lambda x: 'No ✅' if x == 0 else 'Yes ⚠️')
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        oldpeak = st.slider('📉 ST Depression', 0.0, 6.0, 1.0)
+    with col2:
+        slope = st.selectbox('📈 ST Slope', [0, 1, 2], format_func=lambda x: ['Up', 'Flat', 'Down'][x])
+    with col3:
+        ca = st.slider('🚊 Vessels', 0, 3, 0)
     
-    st.markdown("### ST Segment & Other Factors")
-    oldpeak = st.slider('📉 ST Depression (Exercise)', 0.0, 6.0, 1.0, help="ST segment depression")
-    slope = st.selectbox('📈 Slope of Peak ST Segment', [0, 1, 2], format_func=lambda x: ['Upsloping', 'Flat', 'Downsloping'][x])
+    col1, col2 = st.columns(2)
+    with col1:
+        thal = st.selectbox('🩺 Thalassemia', [1, 2, 3, 6, 7], 
+                           format_func=lambda x: {1: 'Normal', 2: 'Fixed', 3: 'Reversible', 6: 'Normal', 7: 'Reversible'}[x])
+    with col2:
+        restecg = st.selectbox('📊 Resting ECG', [0, 1, 2], format_func=lambda x: ['Normal', 'Abnormal', 'LVH'][x])
 
-st.markdown("### Additional Health Indicators")
-col3, col4 = st.columns(2)
-with col3:
-    ca = st.slider('🚊 Major Vessels (Fluoroscopy)', 0, 3, 0, help="Number of major vessels colored")
-with col4:
-    thal = st.selectbox('🩺 Thalassemia', [1, 2, 3, 6, 7], format_func=lambda x: {1: 'Normal', 2: 'Fixed Defect', 3: 'Reversible Defect', 6: 'Normal', 7: 'Reversible Defect'}[x])
-    restecg = st.selectbox('📊 Resting ECG Results', [0, 1, 2], format_func=lambda x: ['Normal', 'ST-T Abnormality', 'LVH'][x])
+with tab3:
+    col1, col2 = st.columns(2)
+    with col1:
+        trestbps = st.slider('🩸 Resting BP', 90, 200, 120)
+    with col2:
+        chol = st.slider('🧬 Cholesterol', 100, 600, 200)
+    
+    fbs = st.selectbox('🍬 Fasting Blood Sugar', [0, 1], format_func=lambda x: 'Normal' if x == 0 else 'High')
 
 st.markdown("</div>", unsafe_allow_html=True)
+
 st.markdown("---")
 
-# Prediction button
-st.markdown("## 🔮 AI Prediction")
-prediction_button = st.button('🔍 Analyze Heart Health', use_container_width=True)
+# Prediction buttons
+col1, col2, col3 = st.columns([2, 1, 1])
 
-if prediction_button:
-    # Show loading animation
-    with st.spinner('🤖 AI is analyzing your data...'):
+with col1:
+    predict_button = st.button('🔍 Comprehensive Analysis', use_container_width=True)
+
+with col2:
+    reset_button = st.button('🔄 Reset', use_container_width=True)
+
+if reset_button:
+    st.rerun()
+
+# Initialize session state
+if 'prediction_history' not in st.session_state:
+    st.session_state.prediction_history = []
+
+if predict_button:
+    with st.spinner('🤖 Analyzing...'):
         time.sleep(1)
         
         features = np.array([[age, sex, cp, trestbps, chol, fbs, restecg, thalach, exang, oldpeak, slope, ca, thal]])
         prediction = model.predict(features)[0]
-        prob = model.predict_proba(features)[0]
+        probs = model.predict_proba(features)[0]
         
-        prob_no_disease = prob[0]
-        prob_disease = prob[1]
+        prob_disease = probs[1]
+        prob_safe = probs[0]
+        
+        st.session_state.prediction_history.append({
+            'timestamp': datetime.now().strftime("%H:%M"),
+            'age': age,
+            'risk': prediction,
+            'prob': prob_disease
+        })
     
-    # Display results
-    st.markdown("### 📊 Prediction Results")
+    st.markdown("---")
+    st.markdown("### 📊 ANALYSIS RESULTS")
     
     if prediction == 1:
-        # High Risk Result
         st.markdown(f"""
             <div class='result-high-risk'>
-                <div class='result-title'>⚠️ HIGH RISK ALERT ⚠️</div>
-                <div class='result-probability'>Heart Disease Risk: {prob_disease:.1%}</div>
-                <div class='result-probability'>Safe Probability: {prob_no_disease:.1%}</div>
+                <div class='result-title'>⚠️ HIGH CARDIOVASCULAR RISK ⚠️</div>
+                <div class='result-probability'>Risk: {prob_disease:.1%} | Safe: {prob_safe:.1%}</div>
                 <div class='result-message'>
-                    💔 The AI model indicates a higher risk of heart disease.<br>
-                    🏥 <strong>IMPORTANT:</strong> Seek medical attention immediately<br>
-                    📋 Schedule an appointment with a cardiologist as soon as possible
+                    🚨 Elevated risk detected<br>
+                    💔 IMMEDIATE ACTION REQUIRED<br>
+                    🏥 Schedule cardiology appointment
                 </div>
             </div>
         """, unsafe_allow_html=True)
     else:
-        # Low Risk Result
         st.markdown(f"""
             <div class='result-low-risk'>
-                <div class='result-title'>✅ LOW RISK ✅</div>
-                <div class='result-probability'>Heart Disease Risk: {prob_disease:.1%}</div>
-                <div class='result-probability'>Safe Probability: {prob_no_disease:.1%}</div>
+                <div class='result-title'>✅ LOW CARDIOVASCULAR RISK ✅</div>
+                <div class='result-probability'>Risk: {prob_disease:.1%} | Safe: {prob_safe:.1%}</div>
                 <div class='result-message'>
-                    ❤️ Good news! The AI indicates a lower risk of heart disease.<br>
-                    💪 Keep maintaining a healthy lifestyle<br>
-                    📍 Continue regular health check-ups and exercise
+                    ✨ Good health indicators<br>
+                    ❤️ MAINTAIN CURRENT LIFESTYLE<br>
+                    💪 Continue healthy habits
                 </div>
             </div>
         """, unsafe_allow_html=True)
     
-    # Additional insights
+    # Risk gauge (Plotly - with error handling)
+    st.markdown("### 🎯 RISK ASSESSMENT")
+    try:
+        fig = go.Figure(go.Indicator(
+            mode="gauge+number",
+            value=prob_disease * 100,
+            title={'text': "Risk %"},
+            gauge={
+                'axis': {'range': [0, 100]},
+                'bar': {'color': "#FF6B6B" if prediction == 1 else "#56AB2F"},
+                'steps': [
+                    {'range': [0, 30], 'color': "#A8E063"},
+                    {'range': [30, 70], 'color': "#FFD700"},
+                    {'range': [70, 100], 'color': "#FF6B6B"}
+                ]
+            }
+        ))
+        fig.update_layout(height=300)
+        st.plotly_chart(fig, use_container_width=True)
+    except Exception as e:
+        st.info(f"Risk Score: {prob_disease:.1%}")
+    
+    # Risk factors
     st.markdown("---")
-    st.markdown("### 💡 Key Health Insights")
+    st.markdown("### 🎯 RISK FACTOR ANALYSIS")
     
-    col_insights1, col_insights2 = st.columns(2)
+    col1, col2 = st.columns(2)
+    with col1:
+        risk_count = sum([
+            cp > 0,
+            trestbps > 140,
+            chol > 240,
+            exang == 1,
+            oldpeak > 2,
+            age > 60
+        ])
+        st.write(f"**Risk Factors: {risk_count}/6**")
+        
+        if cp > 0:
+            st.warning("🤕 Chest pain present")
+        if trestbps > 140:
+            st.warning("🩸 High blood pressure")
+        if chol > 240:
+            st.warning("🧬 High cholesterol")
+        if exang == 1:
+            st.warning("🏃 Exercise-induced angina")
+        if oldpeak > 2:
+            st.warning("📉 ST depression")
+        if age > 60:
+            st.warning("👴 Advanced age")
+        
+        if risk_count == 0:
+            st.success("✅ No major risk factors!")
     
-    with col_insights1:
-        st.markdown(f"""
-        **📈 Your Vitals Summary:**
-        - 🫀 Heart Rate: {thalach} bpm
-        - 🩸 Blood Pressure: {trestbps} mm Hg
-        - 🧬 Cholesterol: {chol} mg/dl
-        - 👤 Age: {age} years
-        """)
+    with col2:
+        st.markdown("#### 🏥 RECOMMENDATIONS")
+        
+        recs = []
+        if prediction == 1:
+            recs.append("🚨 Schedule immediate cardiology consultation")
+        if chol > 240:
+            recs.append("🥗 Reduce dietary cholesterol")
+        if trestbps > 140:
+            recs.append("🧂 Reduce sodium intake")
+        if thalach < 100:
+            recs.append("🏃 Increase aerobic exercise")
+        if age > 60:
+            recs.append("📅 Schedule annual cardiac screening")
+        if not recs:
+            recs.append("✅ Maintain current lifestyle")
+            recs.append("💪 Continue regular exercise")
+        
+        for rec in recs:
+            st.info(rec)
     
-    with col_insights2:
-        st.markdown(f"""
-        **🎯 Risk Factors Detected:**
-        - Chest Pain Type: {"Present ⚠️" if cp > 0 else "None ✅"}
-        - Exercise Angina: {"Yes ⚠️" if exang == 1 else "No ✅"}
-        - High Cholesterol: {"Yes ⚠️" if chol > 240 else "No ✅"}
-        - Elevated BP: {"Yes ⚠️" if trestbps > 140 else "No ✅"}
-        """)
-    
-    # Recommendations
+    # Comparative analysis
     st.markdown("---")
-    st.markdown("### 📋 Personalized Recommendations")
+    st.markdown("### 📊 COMPARATIVE ANALYSIS")
     
-    recommendations = []
-    if chol > 240:
-        recommendations.append("🥗 Reduce cholesterol intake - limit saturated fats and processed foods")
-    if trestbps > 140:
-        recommendations.append("🧂 Reduce sodium intake and manage stress levels")
-    if thalach < 100:
-        recommendations.append("🏃 Increase cardiovascular exercise - aim for 150 mins/week")
-    if exang == 1:
-        recommendations.append("⚕️ Consult your doctor before increasing exercise intensity")
-    if age > 60:
-        recommendations.append("📊 Schedule regular cardiac check-ups")
-    
-    if not recommendations:
-        recommendations.append("✅ Maintain your current healthy lifestyle!")
-        recommendations.append("💪 Continue regular exercise and balanced diet")
-    
-    for i, rec in enumerate(recommendations, 1):
-        st.markdown(f"**{i}. {rec}**")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        bp_diff = trestbps - 120
+        st.metric("Blood Pressure", f"{trestbps} mm Hg", f"{bp_diff:+d}")
+    with col2:
+        chol_diff = chol - 200
+        st.metric("Cholesterol", f"{chol} mg/dl", f"{chol_diff:+d}")
+    with col3:
+        hr_diff = thalach - 70
+        st.metric("Heart Rate", f"{thalach} bpm", f"{hr_diff:+d}")
 
 st.markdown("---")
 st.markdown("""
