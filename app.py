@@ -1,10 +1,20 @@
 import streamlit as st
 import joblib
 import numpy as np
+import pandas as pd
 import time
+from datetime import datetime
+import csv
+import io
 
 # Load the model
 model = joblib.load('model.pkl')
+
+# Initialize session state
+if 'prediction_history' not in st.session_state:
+    st.session_state.prediction_history = []
+if 'patient_data' not in st.session_state:
+    st.session_state.patient_data = {}
 
 # Custom title with heart
 st.set_page_config(
@@ -156,6 +166,21 @@ with st.sidebar:
     
     🏥 Always consult healthcare professionals
     """)
+    
+    st.markdown("---")
+    st.markdown("### 📜 Prediction History")
+    if st.session_state.prediction_history:
+        st.write(f"**Total Predictions:** {len(st.session_state.prediction_history)}")
+        with st.expander("View History"):
+            for i, record in enumerate(st.session_state.prediction_history[-5:], 1):
+                risk = "🔴 HIGH" if record['risk'] == 1 else "🟢 LOW"
+                st.write(f"{i}. {risk} - {record['prob']:.1%} - {record['timestamp']}")
+    else:
+        st.write("No predictions yet")
+    
+    if st.button("🔄 Clear History"):
+        st.session_state.prediction_history = []
+        st.success("History cleared!")
 
 # Welcome section
 with st.expander("📖 About This App", expanded=False):
@@ -218,7 +243,24 @@ st.markdown("---")
 
 # Prediction button
 st.markdown("## 🔮 AI Prediction")
-prediction_button = st.button('🔍 Analyze Heart Health', use_container_width=True)
+col1, col2, col3 = st.columns(3)
+with col1:
+    prediction_button = st.button('🔍 Analyze Heart Health', use_container_width=True)
+with col2:
+    reset_button = st.button('🔄 Reset Form', use_container_width=True)
+with col3:
+    save_button = st.button('💾 Save Data', use_container_width=True)
+
+if reset_button:
+    st.rerun()
+
+if save_button:
+    st.session_state.patient_data = {
+        'age': age, 'sex': sex, 'cp': cp, 'trestbps': trestbps,
+        'chol': chol, 'fbs': fbs, 'restecg': restecg, 'thalach': thalach,
+        'exang': exang, 'oldpeak': oldpeak, 'slope': slope, 'ca': ca, 'thal': thal
+    }
+    st.success("✅ Patient data saved!")
 
 if prediction_button:
     # Show loading animation
@@ -231,6 +273,18 @@ if prediction_button:
         
         prob_no_disease = prob[0]
         prob_disease = prob[1]
+        
+        # Add to history
+        st.session_state.prediction_history.append({
+            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M"),
+            'age': age,
+            'risk': prediction,
+            'prob': prob_disease
+        })
+        
+        # Calculate health score
+        health_score = 100 * prob_no_disease
+        risk_level = "🔴 CRITICAL" if prob_disease > 0.8 else ("🟠 HIGH" if prob_disease > 0.5 else ("🟡 MODERATE" if prob_disease > 0.3 else "🟢 LOW"))
     
     # Display results
     st.markdown("### 📊 Prediction Results")
@@ -264,6 +318,17 @@ if prediction_button:
             </div>
         """, unsafe_allow_html=True)
     
+    # Health Score Display
+    st.markdown("---")
+    st.markdown("### 🏥 Health Score & Risk Level")
+    col_score1, col_score2, col_score3 = st.columns(3)
+    with col_score1:
+        st.metric("💚 Health Score", f"{health_score:.1f}/100")
+    with col_score2:
+        st.metric("⚠️ Risk Level", risk_level)
+    with col_score3:
+        st.metric("📊 Confidence", f"{max(prob_disease, prob_no_disease):.1%}")
+    
     # Additional insights
     st.markdown("---")
     st.markdown("### 💡 Key Health Insights")
@@ -288,6 +353,27 @@ if prediction_button:
         - Elevated BP: {"Yes ⚠️" if trestbps > 140 else "No ✅"}
         """)
     
+    # Lifestyle Assessment
+    st.markdown("---")
+    st.markdown("### 🏃 Lifestyle Assessment")
+    col_lifestyle1, col_lifestyle2 = st.columns(2)
+    
+    with col_lifestyle1:
+        st.write("**Activity Level:**")
+        if thalach < 100:
+            st.warning("⬇️ Low activity - increase exercise")
+        elif thalach < 130:
+            st.info("⚠️ Moderate - room for improvement")
+        else:
+            st.success("✅ Good cardiovascular fitness")
+    
+    with col_lifestyle2:
+        st.write("**Stress/Symptom Level:**")
+        if exang == 1:
+            st.warning("⬆️ Exercise-induced angina detected")
+        else:
+            st.success("✅ No exercise-induced symptoms")
+    
     # Recommendations
     st.markdown("---")
     st.markdown("### 📋 Personalized Recommendations")
@@ -303,13 +389,52 @@ if prediction_button:
         recommendations.append("⚕️ Consult your doctor before increasing exercise intensity")
     if age > 60:
         recommendations.append("📊 Schedule regular cardiac check-ups")
+    if oldpeak > 2:
+        recommendations.append("💊 Consider cardiac stress management program")
     
     if not recommendations:
         recommendations.append("✅ Maintain your current healthy lifestyle!")
         recommendations.append("💪 Continue regular exercise and balanced diet")
+        recommendations.append("🥗 Keep following healthy eating habits")
     
     for i, rec in enumerate(recommendations, 1):
         st.markdown(f"**{i}. {rec}**")
+    
+    # Export Results
+    st.markdown("---")
+    st.markdown("### 📥 Export Results")
+    
+    col_export1, col_export2 = st.columns(2)
+    
+    with col_export1:
+        # CSV Download
+        result_df = pd.DataFrame({
+            'Parameter': ['Age', 'Sex', 'Heart Rate', 'Blood Pressure', 'Cholesterol', 'Risk Prediction', 'Risk Probability', 'Health Score'],
+            'Value': [age, 'Male' if sex == 1 else 'Female', thalach, trestbps, chol, 'HIGH RISK' if prediction == 1 else 'LOW RISK', f'{prob_disease:.1%}', f'{health_score:.1f}']
+        })
+        csv_buffer = io.StringIO()
+        result_df.to_csv(csv_buffer, index=False)
+        csv_string = csv_buffer.getvalue()
+        
+        st.download_button(
+            label="📊 Download Results (CSV)",
+            data=csv_string,
+            file_name=f"heart_prediction_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+            mime="text/csv"
+        )
+    
+    with col_export2:
+        if st.session_state.prediction_history:
+            # History Download
+            history_df = pd.DataFrame(st.session_state.prediction_history)
+            csv_history = history_df.to_csv(index=False)
+            
+            st.download_button(
+                label="📜 Download History (CSV)",
+                data=csv_history,
+                file_name=f"prediction_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                mime="text/csv"
+            )
 
 st.markdown("---")
 st.markdown("""
