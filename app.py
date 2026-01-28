@@ -139,6 +139,24 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
+# Sidebar with model info
+with st.sidebar:
+    st.markdown("### 📊 Model Information")
+    st.metric("🎯 Model Accuracy", "88.33%", help="Accuracy on test set")
+    st.metric("🤖 Algorithm", "Random Forest", help="Machine Learning Model")
+    st.metric("🌳 Number of Trees", "100", help="Ensemble estimators")
+    st.metric("📈 Test Set Size", "20%", help="Validation data split")
+    
+    st.markdown("---")
+    st.markdown("### 💡 Quick Tips")
+    st.info("""
+    ✅ Enter accurate medical data for better predictions
+    
+    ⚠️ This is a screening tool only
+    
+    🏥 Always consult healthcare professionals
+    """)
+
 # Welcome section
 with st.expander("📖 About This App", expanded=False):
     st.markdown("""
@@ -151,6 +169,11 @@ with st.expander("📖 About This App", expanded=False):
     - 🤖 Our AI model analyzes your data
     - 📊 Get instant risk assessment
     - 💡 Receive personalized insights
+    
+    **Model Performance:**
+    - 🎯 **Accuracy: 88.33%** - Highly reliable predictions
+    - 🌳 Trained on 297 patient samples
+    - 📊 13 different health factors analyzed
     
     **Important:** This tool is for educational purposes only. Always consult qualified healthcare professionals.
     """)
