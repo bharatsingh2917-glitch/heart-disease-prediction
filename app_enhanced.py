@@ -73,7 +73,7 @@ st.markdown(f"""
     <style>
         /* Main background */
         .stApp {{
-            background: linear-gradient(135deg, #E3F2FD 0%, #F0F4F8 100%);
+            background: linear-gradient(135deg, #F5F9FF 0%, #FFFFFF 100%);
         }}
         
         /* Header styling */
